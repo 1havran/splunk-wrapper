@@ -19,14 +19,15 @@ LDAP_INPUT_PARAM="(uid=wlutz)"
 LDAP_OUTPUT_PARAM="uidNumber gidNumber"
 ROUTING_MAP="splk_routing_map.cfg"
 USE_STDOUT=1
-#USE_LOGGER=$(queryCmd logger)
+#USE_LOGGER=0
 
 logme() {
 	if [ $USE_STDOUT ]; then
 		echo "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
 	fi
 	if [ $USE_LOGGER ]; then
-		$USE_LOGGER "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
+		LOGGER="logger"
+		$LOGGER "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
 	fi
 }
 
