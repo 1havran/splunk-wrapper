@@ -19,7 +19,7 @@ LDAP_INPUT_PARAM="(uid=wlutz)"
 LDAP_OUTPUT_PARAM="uidNumber gidNumber"
 ROUTING_MAP="splk_routing_map.cfg"
 USE_STDOUT=1
-#USE_LOGGER=$(which logger)
+#USE_LOGGER=$(queryCmd logger)
 
 logme() {
 	if [ $USE_STDOUT ]; then
@@ -29,6 +29,19 @@ logme() {
 		$USE_LOGGER "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
 	fi
 }
+
+# do not depend on which(1) - from Splunk TA nix
+queryCmd() {
+	for dir in `echo $PATH | sed 's/:/ /g'`; do
+		if [ -x $dir/$1 ]; then
+			return 0
+		fi
+	done
+	logme "func=prolog msg=\"Mandatory command not found" cmd=\"$1\" path=\"$PATH\"" status=ko"
+	exit 1
+
+}
+
 
 getDeploymentServer() {
 	FILE=$($MKTEMP)
@@ -66,24 +79,22 @@ setDeploymentServer() {
 }
 
 prolog() {
-	UNAME=$(which uname)
-	ARCH=$($UNAME -s)
-	
-	HOSTNAME=$(which hostname)
-	LDAPSEARCH=$(which ldapsearch)
-	if [ $? != 0 ]; then
-		logme "func=prolog msg=\"cannot locate ldapsearch using which\" status=ko"
-		exit 1
-	fi
+	ARCH=`uname -s`
+	queryCmd hostname
+	HOSTNAME="hostname"
+
+	queryCmd ldapsearch
+	LDAPSEARCH="ldapsearch"
+
 	LDAPSEARCH_LINUX="$LDAPSEARCH -x -LLL -h $LDAP_HOST:$LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
 	LDAPSEARCH_SOLARIS="$LDAPSEARCH -L -h $LDAP_HOST -p $LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
 	LDAPSEARCH_AIX="$LDAPSEARCH -L -h $LDAP_HOST:$LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
 
-	case "$ARCH" in
-		AIX)
+	case "x$ARCH" in
+		"xAIX")
 			LDAPSEARCH_CMD=$LDAPSEARCH_AIX
 			;;
-		Solaris)
+		"xSolaris|xSunOS")
 			LDAPSEARCH_CMD=$LDAPSEARCH_SOLARIS
 			;;
 		*)
@@ -92,20 +103,12 @@ prolog() {
 	esac
 	LDAPSEARCH_CMD=$LDAPSEARCH_LINUX
 	
-	MKTEMP=$(which mktemp)
-	if [ $? != 0 ]; then	
-		logme "func=prolog msg=\"cannot locate mktemp using which\" status=ko"
-		exit 1
-	fi
+	queryCmd mktemp
+	MKTEMP="mktemp"
 	
-	CUT=$(which cut)
-	if [ $? != 0 ]; then
-		logme "func=prolog msg=\"cannot locate cut using which\" status=ko"
-		exit 1
-	fi
-	logme "func=prolog msg=\"found: cut ldapsearch mktemp\" status=ok"
+	queryCmd cut
+	CUT="cut"
 }
-	
 prolog
 getDeploymentServer #returns DS_OK=1 if DS is foudn
 if [ $DS_OK ]; then
