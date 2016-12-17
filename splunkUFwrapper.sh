@@ -102,7 +102,6 @@ prolog() {
 			LDAPSEARCH_CMD=$LDAPSEARCH_LINUX
 			;;
 	esac
-	LDAPSEARCH_CMD=$LDAPSEARCH_LINUX
 	
 	queryCmd mktemp
 	MKTEMP="mktemp"
