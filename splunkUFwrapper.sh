@@ -23,10 +23,10 @@ USE_STDOUT=1
 
 logme() {
 	if [ $USE_STDOUT ]; then
-		echo "script=$0 timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
+		echo "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
 	fi
 	if [ $USE_LOGGER ]; then
-		$USE_LOGGER "script=$0 timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
+		$USE_LOGGER "script=$0 arch=$ARCH timestamp=\"$(date)\" hostname=$($HOSTNAME) $@"
 	fi
 }
 
@@ -67,6 +67,8 @@ setDeploymentServer() {
 
 prolog() {
 	UNAME=$(which uname)
+	ARCH=$($UNAME -s)
+	
 	HOSTNAME=$(which hostname)
 	LDAPSEARCH=$(which ldapsearch)
 	if [ $? != 0 ]; then
@@ -74,12 +76,24 @@ prolog() {
 		exit 1
 	fi
 	LDAPSEARCH_LINUX="$LDAPSEARCH -x -LLL -h $LDAP_HOST:$LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
-	LDAPSEARCH_SOLARIS=""
-	LDAPSEARCH_AIX=""
+	LDAPSEARCH_SOLARIS="$LDAPSEARCH -L -h $LDAP_HOST -p $LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
+	LDAPSEARCH_AIX="$LDAPSEARCH -L -h $LDAP_HOST:$LDAP_PORT -b $LDAP_BASEDN $LDAP_INPUT_PARAM $LDAP_OUTPUT_PARAM"
+
+	case "$ARCH" in
+		AIX)
+			LDAPSEARCH_CMD=$LDAPSEARCH_AIX
+			;;
+		Solaris)
+			LDAPSEARCH_CMD=$LDAPSEARCH_SOLARIS
+			;;
+		*)
+			LDAPSEARCH_CMD=$LDAPSEARCH_LINUX
+			;;
+	esac
 	LDAPSEARCH_CMD=$LDAPSEARCH_LINUX
 	
 	MKTEMP=$(which mktemp)
-	if [ $? != 0 ]; then
+	if [ $? != 0 ]; then	
 		logme "func=prolog msg=\"cannot locate mktemp using which\" status=ko"
 		exit 1
 	fi
