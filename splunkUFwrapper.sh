@@ -47,7 +47,6 @@ queryCmd() {
 	done
 	logme "func=prolog msg=\"Mandatory command not found" cmd=\"$1\" path=\"$PATH\"" status=ko"
 	exit 1
-
 }
 
 
@@ -90,7 +89,7 @@ getDeploymentServer() {
 
 setDeploymentServer() {
 	if [ ! -f $DEPLOYMENTCLIENT_CONF ]; then
-		logme "func=setDeploymentServer msg=\"unable to locate $DEPLOYMENTCLIENT_CONF\" status=ko"
+		logme "func=setDeploymentServer msg=\"unable to locate deploymentclient config\" file=\"$DEPLOYMENTCLIENT_CONF\" dir=\"$(pwd)\" status=ko"
 		exit 1
 	fi
 	queryCmd sed
@@ -101,8 +100,6 @@ setDeploymentServer() {
 
 prolog() {
 	ARCH=`uname -s`
-	queryCmd hostname
-	HOSTNAME="hostname"
 
 	queryCmd ldapsearch
 	LDAPSEARCH="ldapsearch"
@@ -130,9 +127,11 @@ prolog() {
 	CUT="cut"
 }
 
+HOSTNAME="hostname"
 #if override file exists, read the content (one line) and use it as splk destination ds
 if [ -s $OVERRIDE_FILE ]; then
 	SPLK_DEST_DS=$(cat $OVERRIDE_FILE)
+	logme "func=override msg=\"using DS from override file\" ds=\"$SPLK_DEST_DS\" status=ok"
 else
 	prolog
 	getDeploymentServer
