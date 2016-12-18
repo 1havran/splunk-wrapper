@@ -99,8 +99,6 @@ setDeploymentServer() {
 }
 
 prolog() {
-	ARCH=`uname -s`
-
 	queryCmd ldapsearch
 	LDAPSEARCH="ldapsearch"
 
@@ -127,8 +125,9 @@ prolog() {
 	CUT="cut"
 }
 
+ARCH=`uname -s`
 HOSTNAME="hostname"
-#if override file exists, read the content (one line) and use it as splk destination ds
+
 if [ -s $OVERRIDE_FILE ]; then
 	SPLK_DEST_DS=$(cat $OVERRIDE_FILE)
 	logme "func=override msg=\"using DS from override file\" ds=\"$SPLK_DEST_DS\" status=ok"
