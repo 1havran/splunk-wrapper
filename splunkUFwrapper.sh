@@ -138,7 +138,5 @@ fi
 
 if [ "$SPLK_DEST_DS" ] ; then
 	setDeploymentServer "$SPLK_DEST_DS"
-	return 0
 fi
 
-return 1
